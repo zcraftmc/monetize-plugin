@@ -44,7 +44,7 @@ public final class WebhookManager {
     public void sendPurchaseWebhook(ConfigManager.Purchase purchase, Player player) {
         if (!config.features.discordWebhooksEnabled) return;
 
-        String webhookUrl = config.webhookUrls.getOrDefault(purchase.storeName.toLowerCase(), config.webhookUrls.get("default"));
+        String webhookUrl = config.discord.webhookUrls.getOrDefault(purchase.storeName.toLowerCase(), config.discord.webhookUrls.get("default"));
         if (webhookUrl == null || webhookUrl.isEmpty() || webhookUrl.equals("YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE")) {
             plugin.getLogger().warning("No Discord webhook URL configured for store '" + purchase.storeName + "' or default.");
             return;
@@ -102,7 +102,7 @@ public final class WebhookManager {
     public void sendGoalUpdateWebhook(ConfigManager.DonationGoal goal, String progressBar, double progressPercent) {
         if (!config.features.discordWebhooksEnabled) return;
 
-        String webhookUrl = config.webhookUrls.getOrDefault("default", "");
+        String webhookUrl = config.discord.webhookUrls.getOrDefault("default", "");
         if (webhookUrl.isEmpty() || webhookUrl.equals("YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE")) {
             plugin.getLogger().warning("No default Discord webhook URL configured for goal updates.");
             return;
@@ -155,7 +155,7 @@ public final class WebhookManager {
     public void sendGoalCompletionWebhook(ConfigManager.DonationGoal goal) {
         if (!config.features.discordWebhooksEnabled) return;
 
-        String webhookUrl = config.webhookUrls.getOrDefault("default", "");
+        String webhookUrl = config.discord.webhookUrls.getOrDefault("default", "");
         if (webhookUrl.isEmpty() || webhookUrl.equals("YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE")) {
             plugin.getLogger().warning("No default Discord webhook URL configured for goal completion.");
             return;

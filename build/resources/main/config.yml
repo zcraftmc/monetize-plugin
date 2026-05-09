@@ -1,0 +1,59 @@
+# ==========================================
+# StorePulse | ZCraft Studios
+# ==========================================
+#Website - https://studio.z-craft.xyz\
+#Discord - https://dsc.gg/zcraftstudios
+
+
+
+# =========================
+# Discord Webhook URLs
+# =========================
+discord:
+  webhookUrls:
+    default: "YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE"
+    tebex: "YOUR_TEBEX_DISCORD_WEBHOOK_URL_HERE"
+    craftingstore: "YOUR_CRAFTINGSTORE_DISCORD_WEBHOOK_URL_HERE"
+  apiTokens:
+    tebex: "YOUR_TEBEX_SECRET_KEY_HERE"
+    craftingstore: "YOUR_CRAFTINGSTORE_SECRET_KEY_HERE"
+# =========================
+# Branding and Appearance
+# =========================
+branding:
+  serverName: "My Server"
+  serverIconUrl: "https://example.com/icon.png"
+embedColors:
+  purchase: "#00FF00"
+  goalUpdate: "#FFFF00"
+  goalComplete: "#0000FF"
+messages:
+  thankYou: "Thank you, {player}, for your generous purchase of {product}!"
+  goalComplete: "🎉 {goalName} has been completed! Thank you to all supporters!"
+  goalUpdate: "{goalName} progress: {progressBar} {progressPercent}% ({current}/{target})"
+rolePings:
+  defaultGoal: "<@&123456789012345678>"
+# ============================
+# Webhook Listener & Settings
+# ============================
+webhook:
+  enabled: true
+  serverPort: 8080
+store:
+  defaultStoreName: "generic"
+features:
+  discordWebhooksEnabled: true
+  donationGoalsEnabled: true
+  analyticsEnabled: true
+  autoBackupEnabled: true
+# =============================
+# Customization and Performance
+# =============================
+skinRenderApi: "https://crafatar.com/renders/body/{uuid}?scale=2&overlay"
+avatarApi: "https://crafatar.com/avatars/{uuid}?size=64&overlay"
+goalUpdateIntervalTicks: 1200
+backupIntervalTicks: 72000
+leaderboardEntriesPerPage: 10
+progressBarSegments: 10
+progressBarFullChar: "🟩"
+progressBarEmptyChar: "⬜"

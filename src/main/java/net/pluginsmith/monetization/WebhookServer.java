@@ -31,25 +31,24 @@ public final class WebhookServer {
     }
 
     public void start() throws IOException {
-        if (!config.webhookServerEnabled) {
+        if (!config.webhook.enabled) {
             plugin.getLogger().info("Webhook server is disabled in configuration.");
             return;
         }
 
-        server = HttpServer.create(new InetSocketAddress(config.webhookServerPort), 0);
+        server = HttpServer.create(new InetSocketAddress(config.webhook.serverPort), 0);
         server.setExecutor(Executors.newCachedThreadPool());
 
-        // Register webhook endpoints
-        server.createContext("/webhook/tebex", new TebexWebhookHandler());
-        server.createContext("/webhook/craftingstore", new CraftingStoreWebhookHandler());
-        server.createContext("/webhook/generic", new GenericWebhookHandler());
+        HttpHandler unifiedHandler = new UnifiedWebhookHandler();
+        server.createContext("/webhook", unifiedHandler);
+        server.createContext("/webhook/tebex", unifiedHandler);
+        server.createContext("/webhook/craftingstore", unifiedHandler);
+        server.createContext("/webhook/generic", unifiedHandler);
 
         server.start();
-        plugin.getLogger().info("Webhook server started on port " + config.webhookServerPort);
-        plugin.getLogger().info("Webhook endpoints:");
-        plugin.getLogger().info("  - POST http://your-server:" + config.webhookServerPort + "/webhook/tebex");
-        plugin.getLogger().info("  - POST http://your-server:" + config.webhookServerPort + "/webhook/craftingstore");
-        plugin.getLogger().info("  - POST http://your-server:" + config.webhookServerPort + "/webhook/generic");
+        plugin.getLogger().info("Webhook server started on port " + config.webhook.serverPort);
+        plugin.getLogger().info("Unified webhook endpoint:");
+        plugin.getLogger().info("  - POST http://your-server:" + config.webhook.serverPort + "/webhook");
     }
 
     public void stop() {
@@ -61,7 +60,7 @@ public final class WebhookServer {
 
     // --- Webhook Handlers ---
 
-    private class TebexWebhookHandler implements HttpHandler {
+    private class UnifiedWebhookHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             if (!"POST".equals(exchange.getRequestMethod())) {
@@ -73,89 +72,46 @@ public final class WebhookServer {
                 String body = readRequestBody(exchange);
                 JsonObject webhookData = gson.fromJson(body, JsonObject.class);
 
-                // Tebex webhook structure
-                String playerUuid = webhookData.get("player").getAsJsonObject().get("uuid").getAsString();
-                String playerName = webhookData.get("player").getAsJsonObject().get("name").getAsString();
-                String productId = webhookData.get("packages").getAsJsonArray().get(0).getAsJsonObject().get("id").getAsString();
-                double amount = webhookData.get("price").getAsJsonObject().get("amount").getAsDouble();
+                String playerUuid;
+                String playerName;
+                String productId;
+                double amount;
+                String storeName = "generic";
 
-                // Record the purchase
+                if (webhookData.has("player") && webhookData.has("packages")) {
+                    playerUuid = webhookData.getAsJsonObject("player").get("uuid").getAsString();
+                    playerName = webhookData.getAsJsonObject("player").get("name").getAsString();
+                    productId = webhookData.getAsJsonArray("packages").get(0).getAsJsonObject().get("id").getAsString();
+                    amount = webhookData.getAsJsonObject("price").get("amount").getAsDouble();
+                    storeName = "tebex";
+                } else if (webhookData.has("uuid") && webhookData.has("username") && webhookData.has("package")) {
+                    playerUuid = webhookData.get("uuid").getAsString();
+                    playerName = webhookData.get("username").getAsString();
+                    productId = webhookData.getAsJsonObject("package").get("id").getAsString();
+                    amount = webhookData.get("price").getAsDouble();
+                    storeName = "craftingstore";
+                } else if (webhookData.has("playerUuid") && webhookData.has("playerName") && webhookData.has("productId") && webhookData.has("amount")) {
+                    playerUuid = webhookData.get("playerUuid").getAsString();
+                    playerName = webhookData.get("playerName").getAsString();
+                    productId = webhookData.get("productId").getAsString();
+                    amount = webhookData.get("amount").getAsDouble();
+                    if (webhookData.has("storeName")) {
+                        storeName = webhookData.get("storeName").getAsString();
+                    }
+                } else {
+                    throw new IllegalArgumentException("Unrecognized webhook payload structure");
+                }
+
+                String finalStoreName = storeName;
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    monetizationManager.recordPurchase(UUID.fromString(playerUuid), playerName, productId, amount, "tebex");
+                    monetizationManager.recordPurchase(UUID.fromString(playerUuid), playerName, productId, amount, finalStoreName);
                 });
 
                 sendResponse(exchange, 200, "Purchase recorded successfully");
-                plugin.getLogger().info("Tebex webhook processed for " + playerName + " - " + productId);
+                plugin.getLogger().info("Webhook processed for " + playerName + " - " + productId + " (store=" + finalStoreName + ")");
 
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to process Tebex webhook: " + e.getMessage());
-                sendResponse(exchange, 400, "Invalid webhook data");
-            }
-        }
-    }
-
-    private class CraftingStoreWebhookHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            if (!"POST".equals(exchange.getRequestMethod())) {
-                sendResponse(exchange, 405, "Method not allowed");
-                return;
-            }
-
-            try {
-                String body = readRequestBody(exchange);
-                JsonObject webhookData = gson.fromJson(body, JsonObject.class);
-
-                // CraftingStore webhook structure (adjust based on their API)
-                String playerUuid = webhookData.get("uuid").getAsString();
-                String playerName = webhookData.get("username").getAsString();
-                String productId = webhookData.get("package").getAsJsonObject().get("id").getAsString();
-                double amount = webhookData.get("price").getAsDouble();
-
-                // Record the purchase
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    monetizationManager.recordPurchase(UUID.fromString(playerUuid), playerName, productId, amount, "craftingstore");
-                });
-
-                sendResponse(exchange, 200, "Purchase recorded successfully");
-                plugin.getLogger().info("CraftingStore webhook processed for " + playerName + " - " + productId);
-
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to process CraftingStore webhook: " + e.getMessage());
-                sendResponse(exchange, 400, "Invalid webhook data");
-            }
-        }
-    }
-
-    private class GenericWebhookHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            if (!"POST".equals(exchange.getRequestMethod())) {
-                sendResponse(exchange, 405, "Method not allowed");
-                return;
-            }
-
-            try {
-                String body = readRequestBody(exchange);
-                JsonObject webhookData = gson.fromJson(body, JsonObject.class);
-
-                // Generic webhook structure - expects these fields
-                String playerUuid = webhookData.get("playerUuid").getAsString();
-                String playerName = webhookData.get("playerName").getAsString();
-                String productId = webhookData.get("productId").getAsString();
-                double amount = webhookData.get("amount").getAsDouble();
-                String storeName = webhookData.has("storeName") ? webhookData.get("storeName").getAsString() : "generic";
-
-                // Record the purchase
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    monetizationManager.recordPurchase(UUID.fromString(playerUuid), playerName, productId, amount, storeName);
-                });
-
-                sendResponse(exchange, 200, "Purchase recorded successfully");
-                plugin.getLogger().info("Generic webhook processed for " + playerName + " - " + productId);
-
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to process generic webhook: " + e.getMessage());
+                plugin.getLogger().warning("Failed to process webhook: " + e.getMessage());
                 sendResponse(exchange, 400, "Invalid webhook data");
             }
         }

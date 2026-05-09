@@ -1,6 +1,6 @@
-# Monetization Plugin
+# StorePulse Plugin
 
-A premium Minecraft server monetization plugin with Discord webhook integration, donation tracking, and goal management. Built for Paper 1.21.x servers with full Folia compatibility.
+A premium Minecraft server store and webhook plugin with unified payment webhooks, Discord integration, and goal management. Built for Paper 1.21.x servers with full Folia compatibility.
 
 ## 🎯 Features
 
@@ -32,17 +32,17 @@ A premium Minecraft server monetization plugin with Discord webhook integration,
 - **Java**: Java 21+
 - **Optional**: PlaceholderAPI plugin for placeholder expansion
 
-## � Plugin JAR Location
+## 🧩 Plugin JAR Location
 
 After building the plugin, the compiled `.jar` file is located at:
 
 ```
-build/libs/Monetization-1.0.0.jar
+build/libs/StorePulse-1.0.0.jar
 ```
 
 **Absolute path in this workspace:**
 ```
-/workspaces/monetize-plugin/build/libs/Monetization-1.0.0.jar
+/workspaces/monetize-plugin/build/libs/StorePulse-1.0.0.jar
 ```
 
 Use this file to install the plugin on your server.
@@ -50,14 +50,14 @@ Use this file to install the plugin on your server.
 ## 🚀 Installation
 
 ### Step 1: Download the Plugin
-- Download the latest `Monetization-1.0.0.jar` from the releases page
-- Or compile from source: `./gradlew build` (produces `build/libs/Monetization-1.0.0.jar`)
+- Download the latest `StorePulse-1.0.0.jar` from the releases page
+- Or compile from source: `./gradlew build` (produces `build/libs/StorePulse-1.0.0.jar`)
 - See **Plugin JAR Location** above for the exact file path after building
 
 ### Step 2: Install to Server
 ```bash
 # Copy the jar file to your server's plugins directory
-cp Monetization-1.0.0.jar /path/to/server/plugins/
+cp StorePulse-1.0.0.jar /path/to/server/plugins/
 
 # Restart your server
 ./start.sh
@@ -65,100 +65,117 @@ cp Monetization-1.0.0.jar /path/to/server/plugins/
 
 ### Step 3: Configuration
 On first run, the plugin generates:
-- `plugins/Monetization/config.json` - Plugin configuration
-- `plugins/Monetization/data.json` - Purchase and goal data
-- `plugins/Monetization/backup-data.json` - Automatic backup
+- `plugins/StorePulse/config.yml` - Plugin configuration
+- `plugins/StorePulse/data.json` - Purchase and goal data
+- `plugins/StorePulse/backup-data.json` - Automatic backup
 
 ### Step 4: Configure Webhook Server
 The plugin includes a built-in webhook server to receive purchase notifications from payment processors like Tebex and CraftingStore.
 
-**Important:** Configure your server's firewall to allow incoming connections on the webhook port (default: 8080).
+**Important:** Configure your server's firewall to allow incoming connections on the webhook port.
 
-```json
-{
-  "webhookServerPort": 8080,
-  "webhookServerEnabled": true
-}
+```yaml
+webhook:
+  enabled: true
+  serverPort: 8080
 ```
 
 **Webhook Endpoints:**
-- `POST http://your-server:8080/webhook/tebex` - For Tebex webhooks
-- `POST http://your-server:8080/webhook/craftingstore` - For CraftingStore webhooks
-- `POST http://your-server:8080/webhook/generic` - For custom/generic webhooks
+- `POST http://your-server:8080/webhook` - Unified webhook endpoint for Tebex, CraftingStore, and generic payment processors
+
+If you are using a reverse proxy with HTTPS, expose this endpoint as `https://your-domain:7750/webhook` or the port you choose.
 
 ### Step 5: Configure Payment Processor Webhooks
-Edit `plugins/Monetization/config.json`:
+Edit `plugins/StorePulse/config.yml`:
 
-```json
-{
-  "webhookUrls": {
-    "default": "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN",
-    "store-name": "https://discord.com/api/webhooks/..."
-  },
-  "branding": {
-    "serverName": "Your Server Name",
-    "serverIconUrl": "https://example.com/icon.png"
-  },
-  "features": {
-    "discordWebhooksEnabled": true,
-    "donationGoalsEnabled": true,
-    "analyticsEnabled": true,
-    "autoBackupEnabled": true
-  }
-}
-```
+```yaml
+discord:
+  webhookUrls:
+    default: "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
+    tebex: "https://discord.com/api/webhooks/YOUR_TEBEX_WEBHOOK_URL"
+    craftingstore: "https://discord.com/api/webhooks/YOUR_CRAFTINGSTORE_WEBHOOK_URL"
+  apiTokens:
+    tebex: "YOUR_TEBEX_SECRET_KEY_HERE"
+    craftingstore: "YOUR_CRAFTINGSTORE_SECRET_KEY_HERE"
+branding:
+  serverName: "xyz.studio.zcraft"
+  serverIconUrl: "https://example.com/icon.png"
+embedColors:
+  purchase: "#00FF00"
+  goalUpdate: "#FFFF00"
+  goalComplete: "#0000FF"
+messages:
+  thankYou: "Thank you, {player}, for your generous purchase of {product}!"
+  goalComplete: "🎉 {goalName} has been completed! Thank you to all supporters!"
+  goalUpdate: "{goalName} progress: {progressBar} {progressPercent}% ({current}/{target})"
+rolePings:
+  defaultGoal: "<@&123456789012345678>"
+webhook:
+  enabled: true
+  serverPort: 8080
+store:
+  defaultStoreName: "generic"
+features:
+  discordWebhooksEnabled: true
+  donationGoalsEnabled: true
+  analyticsEnabled: true
+  autoBackupEnabled: true
+``` 
 
 ## 📝 Commands
 
 ### Player Commands
 | Command | Permission | Description |
 |---------|-----------|-------------|
-| `/topdonors [page]` | `monetization.view.topdonors` | View top supporters |
-| `/recentpurchases [page]` | `monetization.view.recentpurchases` | View recent purchases |
-| `/goalstatus <goalId>` | `monetization.view.goalstatus` | Check a specific donation goal |
+| `/topdonors [page]` | `storepulse.view.topdonors` | View top supporters |
+| `/recentpurchases [page]` | `storepulse.view.recentpurchases` | View recent purchases |
+| `/goalstatus <goalId>` | `storepulse.view.goalstatus` | Check a specific donation goal |
 
 ### Admin Commands
 | Command | Permission | Description |
 |---------|-----------|-------------|
-| `/goalcreate <id> <name> <amount> [days]` | `monetization.admin.goal` | Create a donation goal |
-| `/goaledit <id> <field> <value>` | `monetization.admin.goal` | Edit a donation goal |
-| `/reloadmonetization` | `monetization.admin.reload` | Reload configuration |
+| `/goalcreate <id> <name> <amount> [days]` | `storepulse.admin.goal` | Create a donation goal |
+| `/goaledit <id> <field> <value>` | `storepulse.admin.goal` | Edit a donation goal |
+| `/reloadmonetization` | `storepulse.admin.reload` | Reload configuration |
+| `/reloadstorepulse` | `storepulse.admin.reload` | Reload configuration |
 
 **Permission Hierarchy:**
-- `monetization.admin` - Grants all admin permissions (default: OP)
-- `monetization.admin.goal` - Goal creation/editing (default: OP)
-- `monetization.admin.reload` - Configuration reload (default: OP)
+- `storepulse.admin` - Grants all admin permissions (default: OP)
+- `storepulse.admin.goal` - Goal creation/editing (default: OP)
+- `storepulse.admin.reload` - Configuration reload (default: OP)
 
 ## 🔌 PlaceholderAPI Placeholders
 
 ### Global Placeholders
-- `%monetization_total_revenue%` - Total server revenue (all-time)
-- `%monetization_top_donor_name%` - Name of the top donor
-- `%monetization_top_donor_amount%` - Top donor's total contribution
+- `%storepulse_total_revenue%` - Total server revenue (all-time)
+- `%storepulse_top_donor_name%` - Name of the top donor
+- `%storepulse_top_donor_amount%` - Top donor's total contribution
 
 ### Player Placeholders
-- `%monetization_total_donated_<player>%` - Total donated by player
-- `%monetization_total_donated_%player_name%%` - Donated by current player
+- `%storepulse_total_donated_<player>%` - Total donated by player
+- `%storepulse_total_donated_%player_name%%` - Donated by current player
 
 ### Goal Placeholders
-- `%monetization_goal_<goalId>_name%` - Goal name
-- `%monetization_goal_<goalId>_current%` - Current progress amount
-- `%monetization_goal_<goalId>_target%` - Target amount
-- `%monetization_goal_<goalId>_progress_bar%` - Visual progress bar
-- `%monetization_goal_<goalId>_progress_percent%` - Progress percentage
-- `%monetization_goal_<goalId>_remaining%` - Remaining amount needed
-- `%monetization_goal_<goalId>_expires%` - Goal expiration date
-- `%monetization_goal_<goalId>_completed%` - Whether goal is completed
+- `%storepulse_goal_<goalId>_name%` - Goal name
+- `%storepulse_goal_<goalId>_current%` - Current progress amount
+- `%storepulse_goal_<goalId>_target%` - Target amount
+- `%storepulse_goal_<goalId>_progress_bar%` - Visual progress bar
+- `%storepulse_goal_<goalId>_progress_percent%` - Progress percentage
+- `%storepulse_goal_<goalId>_remaining%` - Remaining amount needed
+- `%storepulse_goal_<goalId>_expires%` - Goal expiration date
+- `%storepulse_goal_<goalId>_completed%` - Whether goal is completed
 
 **Example:**
 ```
-Top Donor: %monetization_top_donor_name% ($%monetization_top_donor_amount%)
-Goal Progress: %monetization_goal_summer_progress_bar% %monetization_goal_summer_progress_percent%%%
+Top Donor: %storepulse_top_donor_name% ($%storepulse_top_donor_amount%)
+Goal Progress: %storepulse_goal_summer_progress_bar% %storepulse_goal_summer_progress_percent%%%
 ```
 
 ## ⚙️ Configuration Reference
 
-### config.json Structure
+### config.yml Structure
+
+Placeholders use `storepulse` as the expansion identifier, e.g. `%storepulse_total_revenue%`.
 
 ```json
 {
@@ -272,9 +289,9 @@ The plugin sends webhook messages for:
 1. Go to your Discord server settings
 2. Navigate to **Channels** → Select a channel → **Integrations** → **Webhooks**
 3. Click **Create Webhook**
-4. Give it a name (e.g., "Monetization Bot")
+4. Give it a name (e.g., "StorePulse Bot")
 5. Copy the webhook URL
-6. Paste into `config.json` → `webhookUrls.default`
+6. Paste into `config.yml` → `discord.webhookUrls.default`
 
 ## 💾 Data Files
 
@@ -332,7 +349,7 @@ cd monetize-plugin
 ./gradlew clean build
 
 # Find the compiled jar
-ls build/libs/Monetization-1.0.0.jar
+ls build/libs/StorePulse-1.0.0.jar
 ```
 
 ## 🔧 Advanced Configuration
@@ -361,7 +378,7 @@ The plugin uses [Crafatar](https://crafatar.com) by default. Customize in config
 ### Check Plugin Status
 ```
 /pl
-# Output shows: [✓] Monetization
+# Output shows: [✓] StorePulse
 ```
 
 ### View Recent Purchases
@@ -377,9 +394,9 @@ The plugin uses [Crafatar](https://crafatar.com) by default. Customize in config
 ## 🐛 Troubleshooting
 
 ### Plugin Not Loading
-- Check server log for errors: `grep -i monetization logs/latest.log`
+- Check server log for errors: `grep -i storepulse logs/latest.log`
 - Ensure Java 21+ is installed
-- Verify `plugins/Monetization/` folder exists
+- Verify `plugins/StorePulse/` folder exists
 
 ### Webhooks Not Sending
 - Verify Discord webhook URL is valid and accessible
@@ -387,7 +404,7 @@ The plugin uses [Crafatar](https://crafatar.com) by default. Customize in config
 - Ensure `discordWebhooksEnabled: true` in config
 
 ### Data Not Saving
-- Check file permissions on `plugins/Monetization/`
+- Check file permissions on `plugins/StorePulse/`
 - Verify disk space available
 - Check server logs for I/O errors
 

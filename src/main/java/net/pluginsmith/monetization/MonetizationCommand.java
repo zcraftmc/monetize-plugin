@@ -42,6 +42,7 @@ public final class MonetizationCommand implements CommandExecutor, TabCompleter 
             case "goaledit":
                 return handleGoalEdit(sender, args);
             case "reloadmonetization":
+            case "reloadstorepulse":
                 return handleReload(sender);
             default:
                 return false;
@@ -159,7 +160,7 @@ public final class MonetizationCommand implements CommandExecutor, TabCompleter 
     private boolean handleReload(CommandSender sender) {
         try {
             configManager.loadAll();
-            sender.sendMessage("&aMonetization configuration reloaded.");
+            sender.sendMessage("&aStorePulse configuration reloaded.");
         } catch (IOException e) {
             sender.sendMessage("&cFailed to reload configuration: " + e.getMessage());
         }

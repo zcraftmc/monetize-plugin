@@ -27,6 +27,8 @@ dependencies {
     // compileOnly("net.luckperms:api:5.4") // LuckPerms API
     // compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") // VaultAPI
 
+    // SnakeYAML for YAML serialization/deserialization
+    implementation("org.yaml:snakeyaml:2.0")
     // GSON for JSON serialization/deserialization
     implementation("com.google.code.gson:gson:2.10.1")
 
@@ -35,7 +37,7 @@ dependencies {
 }
 
 tasks.jar {
-    archiveBaseName.set("Monetization")
+    archiveBaseName.set("StorePulse")
 }
 
 tasks.withType<JavaCompile> {

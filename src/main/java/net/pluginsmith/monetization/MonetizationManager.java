@@ -42,7 +42,7 @@ public final class MonetizationManager {
 
         // Register PlaceholderAPI expansion if PlaceholderAPI is enabled
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new MonetizationPlaceholderExpansion(plugin, this).register();
+            new StorePulsePlaceholderExpansion(plugin, this).register();
             plugin.getLogger().info("PlaceholderAPI expansion registered.");
         }
     }
@@ -209,21 +209,21 @@ public final class MonetizationManager {
     }
 
     // --- PlaceholderAPI Expansion (Inner Class) ---
-    private static final class MonetizationPlaceholderExpansion extends PlaceholderExpansion {
+    private static final class StorePulsePlaceholderExpansion extends PlaceholderExpansion {
 
         private final JavaPlugin plugin;
         private final MonetizationManager manager;
         private final DecimalFormat currencyFormat = new DecimalFormat("$#,##0.00");
         private final DecimalFormat percentFormat = new DecimalFormat("0");
 
-        public MonetizationPlaceholderExpansion(JavaPlugin plugin, MonetizationManager manager) {
+        public StorePulsePlaceholderExpansion(JavaPlugin plugin, MonetizationManager manager) {
             this.plugin = plugin;
             this.manager = manager;
         }
 
         @Override
         public @NotNull String getIdentifier() {
-            return "monetization";
+            return "storepulse";
         }
 
         @Override
