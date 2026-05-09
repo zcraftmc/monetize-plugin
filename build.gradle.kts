@@ -19,14 +19,19 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.6") // PlaceholderAPI
-    compileOnly("com.discordsrv:DiscordSRV:1.26.0") // DiscordSRV
-    compileOnly("net.luckperms:api:5.4") // LuckPerms API
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") // VaultAPI
+
+    // Optional soft dependencies are declared in plugin.yml and are not required for compilation
+    // compileOnly("com.discordsrv:DiscordSRV:1.26.0") // DiscordSRV
+    // compileOnly("net.luckperms:api:5.4") // LuckPerms API
+    // compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") // VaultAPI
 
     // GSON for JSON serialization/deserialization
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // HTTP server for webhook reception (built-in Java HTTP server)
+    implementation("com.sun.net.httpserver:http:20070405")
 }
 
 tasks.jar {

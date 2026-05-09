@@ -159,6 +159,8 @@ public final class ConfigManager {
         public int progressBarSegments = 10;
         public String progressBarFullChar = "🟩";
         public String progressBarEmptyChar = "⬜";
+        public int webhookServerPort = 8080; // Port for incoming webhooks from payment processors
+        public boolean webhookServerEnabled = true; // Enable/disable webhook server
 
         public PluginConfig() {
             webhookUrls.put("default", "YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE");
