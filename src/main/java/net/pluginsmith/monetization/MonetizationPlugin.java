@@ -13,6 +13,7 @@ public final class MonetizationPlugin extends JavaPlugin {
     private ConfigManager configManager;
     private WebhookManager webhookManager;
     private MonetizationManager monetizationManager;
+    private WebhookServer webhookServer;
 
     @Override
     public void onEnable() {
@@ -29,6 +30,15 @@ public final class MonetizationPlugin extends JavaPlugin {
         // Initialize managers
         webhookManager = new WebhookManager(this, configManager.getPluginConfig());
         monetizationManager = new MonetizationManager(this, configManager.getPluginData(), webhookManager, configManager.getPluginConfig());
+        webhookServer = new WebhookServer(this, monetizationManager, configManager.getPluginConfig());
+
+        // Start webhook server
+        try {
+            webhookServer.start();
+        } catch (IOException e) {
+            getLogger().severe("Failed to start webhook server: " + e.getMessage());
+            getLogger().severe("Make sure port " + configManager.getPluginConfig().webhookServerPort + " is not in use by another application.");
+        }
 
         // Register commands
         MonetizationCommand commandHandler = new MonetizationCommand(this, monetizationManager, configManager);
@@ -75,12 +85,8 @@ public final class MonetizationPlugin extends JavaPlugin {
         if (configManager.getPluginConfig().features.autoBackupEnabled) {
             long backupInterval = configManager.getPluginConfig().backupIntervalTicks;
             Bukkit.getGlobalRegionScheduler().runAtFixedRate(this, task -> {
-                try {
-                    configManager.createBackup();
-                    getLogger().info("Data backup created successfully.");
-                } catch (IOException e) {
-                    getLogger().severe("Failed to create data backup: " + e.getMessage());
-                }
+                configManager.createBackup();
+                getLogger().info("Data backup created successfully.");
             }, backupInterval, backupInterval);
             getLogger().info("Automatic data backups scheduled every " + (backupInterval / 20 / 60) + " minutes.");
         }
@@ -90,12 +96,13 @@ public final class MonetizationPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Save all data on disable
-        try {
-            configManager.saveAll();
-        } catch (IOException e) {
-            getLogger().severe("Failed to save configuration files on disable: " + e.getMessage());
+        // Stop webhook server
+        if (webhookServer != null) {
+            webhookServer.stop();
         }
+
+        // Save all data on disable
+        configManager.saveAll();
         // Cancel all plugin-owned tasks
         Bukkit.getGlobalRegionScheduler().cancelTasks(this);
         Bukkit.getAsyncScheduler().cancelTasks(this);

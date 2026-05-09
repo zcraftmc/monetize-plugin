@@ -69,7 +69,24 @@ On first run, the plugin generates:
 - `plugins/Monetization/data.json` - Purchase and goal data
 - `plugins/Monetization/backup-data.json` - Automatic backup
 
-### Step 4: Configure Discord Webhooks
+### Step 4: Configure Webhook Server
+The plugin includes a built-in webhook server to receive purchase notifications from payment processors like Tebex and CraftingStore.
+
+**Important:** Configure your server's firewall to allow incoming connections on the webhook port (default: 8080).
+
+```json
+{
+  "webhookServerPort": 8080,
+  "webhookServerEnabled": true
+}
+```
+
+**Webhook Endpoints:**
+- `POST http://your-server:8080/webhook/tebex` - For Tebex webhooks
+- `POST http://your-server:8080/webhook/craftingstore` - For CraftingStore webhooks
+- `POST http://your-server:8080/webhook/generic` - For custom/generic webhooks
+
+### Step 5: Configure Payment Processor Webhooks
 Edit `plugins/Monetization/config.json`:
 
 ```json
@@ -195,8 +212,44 @@ Goal Progress: %monetization_goal_summer_progress_bar% %monetization_goal_summer
 | `goalUpdateIntervalTicks` | Long | 1200 | Goal check interval in ticks (60s) |
 | `backupIntervalTicks` | Long | 72000 | Backup interval in ticks (1 hour) |
 | `progressBarSegments` | Int | 10 | Number of segments in progress bar |
+| `webhookServerPort` | Int | 8080 | Port for incoming payment webhooks |
+| `webhookServerEnabled` | Boolean | true | Enable/disable webhook server |
 
-## 🔗 Discord Webhook Integration
+## � Payment Processor Webhook Setup
+
+### Tebex Webhook Configuration
+1. Log into your Tebex control panel
+2. Go to **Webhooks** → **Create Webhook**
+3. Set the **URL** to: `http://your-server:8080/webhook/tebex`
+4. Select events: **Payment Completed**
+5. Save the webhook
+
+### CraftingStore Webhook Configuration
+1. Log into your CraftingStore dashboard
+2. Go to **Settings** → **Webhooks**
+3. Add webhook URL: `http://your-server:8080/webhook/craftingstore`
+4. Select events: **Purchase Completed**
+5. Save settings
+
+### Generic Webhook Format
+For custom payment processors, send POST requests to `http://your-server:8080/webhook/generic` with this JSON format:
+
+```json
+{
+  "playerUuid": "uuid-string",
+  "playerName": "PlayerName",
+  "productId": "product-123",
+  "amount": 9.99,
+  "storeName": "your-store-name"
+}
+```
+
+### Security Notes
+- Ensure your webhook server port (default 8080) is properly firewalled
+- Consider using HTTPS in production (requires reverse proxy like nginx)
+- The webhook server runs on the same machine as your Minecraft server
+
+## �🔗 Discord Webhook Integration
 
 ### Automatic Webhook Events
 

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 public final class MonetizationManager {
 
-    private final JavaPlugin plugin;
+    private final MonetizationPlugin plugin;
     private final ConfigManager.PluginData pluginData;
     private final WebhookManager webhookManager;
     private final ConfigManager.PluginConfig pluginConfig;
@@ -33,7 +33,7 @@ public final class MonetizationManager {
     private final DecimalFormat currencyFormat = new DecimalFormat("$#,##0.00");
     private final DecimalFormat percentFormat = new DecimalFormat("0");
 
-    public MonetizationManager(JavaPlugin plugin, ConfigManager.PluginData pluginData, WebhookManager webhookManager, ConfigManager.PluginConfig pluginConfig) {
+    public MonetizationManager(MonetizationPlugin plugin, ConfigManager.PluginData pluginData, WebhookManager webhookManager, ConfigManager.PluginConfig pluginConfig) {
         this.plugin = plugin;
         this.pluginData = pluginData;
         this.webhookManager = webhookManager;
@@ -86,7 +86,7 @@ public final class MonetizationManager {
 
     public List<ConfigManager.SupporterData> getTopDonors(int limit) {
         return pluginData.supporters.values().stream()
-            .sorted(Comparator.comparingDouble(ConfigManager.SupporterData::totalAmount).reversed())
+            .sorted(Comparator.comparingDouble((ConfigManager.SupporterData d) -> d.totalAmount).reversed())
             .limit(limit)
             .collect(Collectors.toList());
     }
@@ -263,7 +263,7 @@ public final class MonetizationManager {
             switch (identifier.toLowerCase()) {
                 case "total_revenue":
                     AtomicReference<Double> total = new AtomicReference<>(0.0);
-                    manager.pluginData.analytics.values().forEach(total::updateAndGet);
+                    manager.pluginData.analytics.values().forEach(amount -> total.updateAndGet(current -> current + amount));
                     return currencyFormat.format(total.get());
                 case "top_donor_name":
                     return manager.getTopDonors(1).stream()
