@@ -4,6 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.introspector.BeanAccess;
+import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
 import java.io.FileReader;
@@ -23,6 +29,7 @@ public final class ConfigManager {
 
     private final JavaPlugin plugin;
     private final Gson gson;
+    private final Yaml yaml;
 
     private File configFile;
     private File dataFile;
@@ -35,7 +42,15 @@ public final class ConfigManager {
         this.plugin = plugin;
         this.gson = new GsonBuilder().setPrettyPrinting().create();
 
-        this.configFile = new File(plugin.getDataFolder(), "config.json");
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+        options.setIndent(2);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        this.yaml = new Yaml(new Constructor(PluginConfig.class, loaderOptions), new Representer(options), options, loaderOptions);
+        this.yaml.setBeanAccess(BeanAccess.FIELD);
+
+        this.configFile = new File(plugin.getDataFolder(), "config.yml");
         this.dataFile = new File(plugin.getDataFolder(), "data.json");
         this.backupDataFile = new File(plugin.getDataFolder(), "backup-data.json");
     }
@@ -43,12 +58,12 @@ public final class ConfigManager {
     public void loadAll() throws IOException {
         plugin.getDataFolder().mkdirs(); // Ensure plugin data folder exists
 
-        // Load config.json
+        // Load config.yml
         if (!configFile.exists()) {
-            plugin.saveResource("config.json", false);
+            plugin.saveResource("config.yml", false);
         }
         try (FileReader reader = new FileReader(configFile)) {
-            pluginConfig = gson.fromJson(reader, PluginConfig.class);
+            pluginConfig = yaml.loadAs(reader, PluginConfig.class);
             if (pluginConfig == null) pluginConfig = new PluginConfig(); // Fallback if empty/malformed
         }
 
@@ -81,7 +96,7 @@ public final class ConfigManager {
 
     private void saveConfig() throws IOException {
         try (FileWriter writer = new FileWriter(configFile)) {
-            gson.toJson(pluginConfig, writer);
+            yaml.dump(pluginConfig, writer);
         }
     }
 
@@ -141,16 +156,17 @@ public final class ConfigManager {
         return pluginData;
     }
 
-    // --- Inner Classes for JSON Data Structures ---
+    // --- Inner Classes for YAML Configuration ---
 
     public static final class PluginConfig {
-        public Map<String, String> webhookUrls = new HashMap<>();
-        public Map<String, String> apiTokens = new HashMap<>();
+        public Discord discord = new Discord();
         public Branding branding = new Branding();
         public EmbedColors embedColors = new EmbedColors();
         public Messages messages = new Messages();
         public Map<String, String> rolePings = new HashMap<>();
         public Features features = new Features();
+        public Webhook webhook = new Webhook();
+        public Store store = new Store();
         public String skinRenderApi = "https://crafatar.com/renders/body/{uuid}?scale=2&overlay";
         public String avatarApi = "https://crafatar.com/avatars/{uuid}?size=64&overlay";
         public long goalUpdateIntervalTicks = 1200; // 60 seconds
@@ -159,13 +175,14 @@ public final class ConfigManager {
         public int progressBarSegments = 10;
         public String progressBarFullChar = "🟩";
         public String progressBarEmptyChar = "⬜";
-        public int webhookServerPort = 8080; // Port for incoming webhooks from payment processors
-        public boolean webhookServerEnabled = true; // Enable/disable webhook server
 
         public PluginConfig() {
-            webhookUrls.put("default", "YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE");
-            apiTokens.put("tebex", "YOUR_TEBEX_SECRET_KEY_HERE");
-            branding.serverName = "My Awesome Server";
+            discord.webhookUrls.put("default", "YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE");
+            discord.webhookUrls.put("tebex", "YOUR_TEBEX_DISCORD_WEBHOOK_URL_HERE");
+            discord.webhookUrls.put("craftingstore", "YOUR_CRAFTINGSTORE_DISCORD_WEBHOOK_URL_HERE");
+            discord.apiTokens.put("tebex", "YOUR_TEBEX_SECRET_KEY_HERE");
+            discord.apiTokens.put("craftingstore", "YOUR_CRAFTINGSTORE_SECRET_KEY_HERE");
+            branding.serverName = "xyz.studio.zcraft";
             embedColors.purchase = "#00FF00";
             embedColors.goalUpdate = "#FFFF00";
             embedColors.goalComplete = "#0000FF";
@@ -180,8 +197,22 @@ public final class ConfigManager {
         }
     }
 
+    public static final class Discord {
+        public Map<String, String> webhookUrls = new HashMap<>();
+        public Map<String, String> apiTokens = new HashMap<>();
+    }
+
+    public static final class Webhook {
+        public int serverPort = 8080;
+        public boolean enabled = true;
+    }
+
+    public static final class Store {
+        public String defaultStoreName = "generic";
+    }
+
     public static final class Branding {
-        public String serverName = "My Awesome Server";
+        public String serverName = "xyz.studio.zcraft";
         public String serverIconUrl = "";
     }
 

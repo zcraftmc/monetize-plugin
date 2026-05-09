@@ -37,7 +37,7 @@ public final class MonetizationPlugin extends JavaPlugin {
             webhookServer.start();
         } catch (IOException e) {
             getLogger().severe("Failed to start webhook server: " + e.getMessage());
-            getLogger().severe("Make sure port " + configManager.getPluginConfig().webhookServerPort + " is not in use by another application.");
+            getLogger().severe("Make sure port " + configManager.getPluginConfig().webhook.serverPort + " is not in use by another application.");
         }
 
         // Register commands
@@ -72,6 +72,11 @@ public final class MonetizationPlugin extends JavaPlugin {
             reloadMonetizationCmd.setExecutor(commandHandler);
             reloadMonetizationCmd.setTabCompleter(commandHandler);
         }
+        PluginCommand reloadStorePulseCmd = getCommand("reloadstorepulse");
+        if (reloadStorePulseCmd != null) {
+            reloadStorePulseCmd.setExecutor(commandHandler);
+            reloadStorePulseCmd.setTabCompleter(commandHandler);
+        }
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new MonetizationListener(this, monetizationManager), this);
@@ -91,7 +96,7 @@ public final class MonetizationPlugin extends JavaPlugin {
             getLogger().info("Automatic data backups scheduled every " + (backupInterval / 20 / 60) + " minutes.");
         }
 
-        getLogger().info("Monetization plugin enabled!");
+        printBanner(true);
     }
 
     @Override
@@ -107,7 +112,27 @@ public final class MonetizationPlugin extends JavaPlugin {
         Bukkit.getGlobalRegionScheduler().cancelTasks(this);
         Bukkit.getAsyncScheduler().cancelTasks(this);
 
-        getLogger().info("Monetization plugin disabled.");
+        printBanner(false);
+    }
+
+    private void printBanner(boolean enabled) {
+        String title = "StorePulse";
+        String byLine = "by ZCraft Studios";
+        String state = enabled ? "ENABLED" : "DISABLED";
+        String border = "========================================";
+
+        getLogger().info(border);
+        getLogger().info("  _____ _               _____       _       ");
+        getLogger().info(" / ____| |             |  __ \\     | |      ");
+        getLogger().info("| (___ | |_ _ __ _   _ | |__) |   _| | ___  ");
+        getLogger().info(" \\___ \\| __| '__| | | ||  ___/ | | | |/ _ \\ ");
+        getLogger().info(" ____) | |_| |  | |_| || |   | |_| | |  __/ ");
+        getLogger().info("|_____/ \\__|_|   \\__, ||_|    \\__,_|_|\\___| ");
+        getLogger().info("                  __/ |                    ");
+        getLogger().info("                 |___/                     ");
+        getLogger().info(border);
+        getLogger().info(" " + title + " " + state + " - " + byLine);
+        getLogger().info(border);
     }
 
     public ConfigManager getConfigManager() {
