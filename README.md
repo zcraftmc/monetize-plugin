@@ -32,11 +32,27 @@ A premium Minecraft server monetization plugin with Discord webhook integration,
 - **Java**: Java 21+
 - **Optional**: PlaceholderAPI plugin for placeholder expansion
 
+## � Plugin JAR Location
+
+After building the plugin, the compiled `.jar` file is located at:
+
+```
+build/libs/Monetization-1.0.0.jar
+```
+
+**Absolute path in this workspace:**
+```
+/workspaces/monetize-plugin/build/libs/Monetization-1.0.0.jar
+```
+
+Use this file to install the plugin on your server.
+
 ## 🚀 Installation
 
 ### Step 1: Download the Plugin
 - Download the latest `Monetization-1.0.0.jar` from the releases page
 - Or compile from source: `./gradlew build` (produces `build/libs/Monetization-1.0.0.jar`)
+- See **Plugin JAR Location** above for the exact file path after building
 
 ### Step 2: Install to Server
 ```bash
