@@ -14,31 +14,31 @@ commands:
     aliases: [sp]
     permission: storepulse.admin
   topdonors:
-    description: StorePulse: view the top supporters.
+    description: "StorePulse: view the top supporters."
     usage: "/topdonors [limit]"
     permission: storepulse.view.topdonors
   recentpurchases:
-    description: StorePulse: view recent purchases.
+    description: "StorePulse: view recent purchases."
     usage: "/recentpurchases [limit]"
     permission: storepulse.view.recentpurchases
   goalstatus:
-    description: StorePulse: view the status of donation goals.
+    description: "StorePulse: view the status of donation goals."
     usage: "/goalstatus <goalId>"
     permission: storepulse.view.goalstatus
   goalcreate:
-    description: StorePulse: create a new donation goal.
+    description: "StorePulse: create a new donation goal."
     usage: "/goalcreate <id> <name> <targetAmount> [expiryDays]"
     permission: storepulse.admin.goal
   goaledit:
-    description: StorePulse: edit an existing donation goal.
+    description: "StorePulse: edit an existing donation goal."
     usage: "/goaledit <id> <name|target|current|expiry|complete> <value>"
     permission: storepulse.admin.goal
   reloadmonetization:
-    description: StorePulse: reload the plugin configuration.
+    description: "StorePulse: reload the plugin configuration."
     usage: "/reloadmonetization"
     permission: storepulse.admin.reload
   reloadstorepulse:
-    description: StorePulse: reload the plugin configuration.
+    description: "StorePulse: reload the plugin configuration."
     usage: "/reloadstorepulse"
     permission: storepulse.admin.reload
 

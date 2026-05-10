@@ -2,8 +2,12 @@ package net.pluginsmith.monetization;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.luckperms.api.LuckPerms;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -14,6 +18,11 @@ public final class MonetizationPlugin extends JavaPlugin {
     private WebhookManager webhookManager;
     private MonetizationManager monetizationManager;
     private WebhookServer webhookServer;
+    private LuckPerms luckPerms;
+    private Permission vaultPermission;
+    private boolean luckPermsConnected = false;
+    private boolean vaultConnected = false;
+    private boolean placeholderApiConnected = false;
 
     @Override
     public void onEnable() {
@@ -38,7 +47,12 @@ public final class MonetizationPlugin extends JavaPlugin {
         } catch (IOException e) {
             getLogger().severe("Failed to start webhook server: " + e.getMessage());
             getLogger().severe("Make sure port " + configManager.getPluginConfig().webhook.serverPort + " is not in use by another application.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
         }
+
+        // Connect optional soft dependencies
+        setupOptionalDependencies();
 
         // Register commands
         MonetizationCommand commandHandler = new MonetizationCommand(this, monetizationManager, configManager);
@@ -117,31 +131,58 @@ public final class MonetizationPlugin extends JavaPlugin {
         Bukkit.getGlobalRegionScheduler().cancelTasks(this);
         Bukkit.getAsyncScheduler().cancelTasks(this);
 
-        getLogger().info("StorePulse has been disabled. Thanks for using our plugin!");
-        getLogger().info("Made by ZCraft Studios - https://studio.z-craft.xyz");
+        printBanner(false);
     }
 
-    private void printBanner(boolean enabled) {
-        String header = "STOREPULSe";
-        String byLine = "Made by ZCraft Studios";
-        String state = enabled ? "ENABLED" : "DISABLED";
-        String border = "========================================";
+    private void setupOptionalDependencies() {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            placeholderApiConnected = true;
+            getLogger().info(colorize("&aPlaceholderAPI is available and will be used for expansion."));
+        } else {
+            getLogger().info(colorize("&ePlaceholderAPI is not installed. Placeholder expansion will be unavailable."));
+        }
 
-        getLogger().info(border);
-        getLogger().info("  " + header + " " + state);
-        getLogger().info("  " + byLine);
-        getLogger().info(border);
-        getLogger().info("   _____ _               _____       _       ");
-        getLogger().info("  / ____| |             |  __ \\     | |      ");
-        getLogger().info(" | (___ | |_ _ __ _   _ | |__) |   _| | ___  ");
-        getLogger().info("  \\___ \\| __| '__| | | ||  ___/ | | | |/ _ \\ ");
-        getLogger().info("  ____) | |_| |  | |_| || |   | |_| | |  __/ ");
-        getLogger().info(" |_____/ \\__|_|   \\__, ||_|    \\__,_|_|\\___| ");
-        getLogger().info("                   __/ |                    ");
-        getLogger().info("                  |___/                     ");
-        getLogger().info(border);
+        RegisteredServiceProvider<LuckPerms> luckPermsProvider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (luckPermsProvider != null) {
+            luckPerms = luckPermsProvider.getProvider();
+            luckPermsConnected = true;
+            getLogger().info(colorize("&aLuckPerms detected and hooked successfully."));
+        } else {
+            getLogger().info(colorize("&eLuckPerms is not installed or not available. Permissions fallback will remain unchanged."));
+        }
 
+        RegisteredServiceProvider<Permission> vaultProvider = Bukkit.getServicesManager().getRegistration(Permission.class);
+        if (vaultProvider != null) {
+            vaultPermission = vaultProvider.getProvider();
+            vaultConnected = true;
+            getLogger().info(colorize("&aVault detected and permission support enabled."));
+        } else {
+            getLogger().info(colorize("&eVault is not installed or no permissions provider was found."));
+        }
     }
+
+    private String colorize(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
+
+   private void printBanner(boolean enabled) {
+    String state = enabled ? colorize("&aENABLED") : colorize("&cDISABLED");
+    String border = colorize("&e========================================");
+
+    getLogger().info(border);
+    getLogger().info(colorize("&6StorePulse &7" + state));
+    getLogger().info(colorize("&7Made by ZCraft Studios"));
+    getLogger().info(border);
+
+    getLogger().info(colorize("&e  _____ _                   _____       _          "));
+    getLogger().info(colorize("&e / ____| |                 |  __ \\     | |         "));
+    getLogger().info(colorize("&e| (___ | |_ ___  _ __ ___  | |__) |   _| |___  ___ "));
+    getLogger().info(colorize("&e \\___ \\| __/ _ \\| '__/ _ \\ |  ___/ | | | / __|/ _ \\"));
+    getLogger().info(colorize("&e ____) | || (_) | | |  __/ | |   | |_| | \\__ \\  __/"));
+    getLogger().info(colorize("&e|_____/ \\__\\___/|_|  \\___| |_|    \\__,_|_|___/\\___|"));
+
+    getLogger().info(border);
+}
 
     public ConfigManager getConfigManager() {
         return configManager;
