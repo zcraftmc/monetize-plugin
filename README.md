@@ -1,6 +1,6 @@
-# StorePulse Plugin
+# StorePulse
 
-A premium Minecraft server store and webhook plugin with unified payment webhooks, Discord integration, and goal management. Built for Paper 1.21.x servers with full Folia compatibility.
+**STOREPULSe** - Premium Minecraft server monetization plugin with unified webhooks, Discord integration, and goal management. Made by ZCraft Studios.
 
 ## 🎯 Features
 
@@ -24,6 +24,7 @@ A premium Minecraft server store and webhook plugin with unified payment webhook
 - **Soft Dependencies** - Optional integration with PlaceholderAPI, DiscordSRV, LuckPerms, and Vault
 - **JSON Webhooks** - Custom Discord webhook payload system with embed support
 - **Async Operations** - All I/O operations run asynchronously to prevent server lag
+- **Built-in Webhook Server** - Integrated HTTP server for receiving payment webhooks
 
 ## 📋 Requirements
 
@@ -81,9 +82,10 @@ webhook:
 ```
 
 **Webhook Endpoints:**
-- `POST http://your-server:8080/webhook` - Unified webhook endpoint for Tebex, CraftingStore, and generic payment processors
+- `POST http://your-server:8080/` - Unified webhook endpoint (accepts any path)
+- `GET http://your-server:8080/` - Status page showing "STOREPULSe" and listener status
 
-If you are using a reverse proxy with HTTPS, expose this endpoint as `https://your-domain:7750/webhook` or the port you choose.
+If you are using a reverse proxy with HTTPS, expose this endpoint as `https://your-domain:8080/` or the port you choose.
 
 ### Step 5: Configure Payment Processor Webhooks
 Edit `plugins/StorePulse/config.yml`:
@@ -98,6 +100,92 @@ discord:
     tebex: "YOUR_TEBEX_SECRET_KEY_HERE"
     craftingstore: "YOUR_CRAFTINGSTORE_SECRET_KEY_HERE"
 branding:
+  serverName: "Your Server Name"
+  serverIconUrl: "https://example.com/icon.png"
+```
+
+### Step 6: Commands
+StorePulse provides a unified command system:
+
+```
+/storepulse top [limit]          # Show top donors
+/storepulse recent [limit]       # Show recent purchases
+/storepulse goal status <id>     # Show goal status
+/storepulse goal create <id> <name> <target> [days]  # Create goal
+/storepulse goal edit <id> <field> <value>          # Edit goal
+/storepulse reload               # Reload configuration
+```
+
+Legacy commands are also available:
+- `/topdonors`, `/recentpurchases`, `/goalstatus`, `/goalcreate`, `/goaledit`, `/reloadmonetization`, `/reloadstorepulse`
+
+## 🔧 Configuration
+
+### Webhook Payload Formats
+StorePulse accepts webhooks from multiple payment processors:
+
+#### Tebex Webhook
+```json
+{
+  "player": {
+    "uuid": "player-uuid",
+    "name": "PlayerName"
+  },
+  "packages": [
+    {
+      "id": "package-id"
+    }
+  ],
+  "price": {
+    "amount": 10.00
+  }
+}
+```
+
+#### CraftingStore Webhook
+```json
+{
+  "uuid": "player-uuid",
+  "username": "PlayerName",
+  "package": {
+    "id": "package-id"
+  },
+  "price": 10.00
+}
+```
+
+#### Generic Webhook
+```json
+{
+  "playerUuid": "player-uuid",
+  "playerName": "PlayerName",
+  "productId": "product-id",
+  "amount": 10.00,
+  "storeName": "custom-store"
+}
+```
+
+## 📊 Status Check
+Visit `http://your-server:port/` in a browser to verify the webhook server is running. You should see:
+
+**STOREPULSe**  
+Made by ZCraft Studios  
+Listening for webhooks
+
+## 🛠️ Development
+- **Source**: GitHub repository
+- **Build**: `./gradlew build`
+- **Test**: `./gradlew test`
+- **License**: MIT
+
+## 📞 Support
+- **Website**: https://studio.z-craft.xyz
+- **Discord**: https://dsc.gg/zcraftstudios
+- **Issues**: GitHub Issues
+
+---
+
+**Made by ZCraft Studios** - Premium Minecraft plugins and development services.
   serverName: "xyz.studio.zcraft"
   serverIconUrl: "https://example.com/icon.png"
 embedColors:

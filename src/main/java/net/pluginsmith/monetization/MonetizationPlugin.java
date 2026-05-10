@@ -117,7 +117,8 @@ public final class MonetizationPlugin extends JavaPlugin {
         Bukkit.getGlobalRegionScheduler().cancelTasks(this);
         Bukkit.getAsyncScheduler().cancelTasks(this);
 
-        printBanner(false);
+        getLogger().info("StorePulse has been disabled. Thanks for using our plugin!");
+        getLogger().info("Made by ZCraft Studios - https://studio.z-craft.xyz");
     }
 
     private void printBanner(boolean enabled) {
@@ -130,14 +131,14 @@ public final class MonetizationPlugin extends JavaPlugin {
         getLogger().info("  " + header + " " + state);
         getLogger().info("  " + byLine);
         getLogger().info(border);
-        getLogger().info("  _____ _               _____       _       ");
-        getLogger().info(" / ____| |             |  __ \\     | |      ");
-        getLogger().info("| (___ | |_ _ __ _   _ | |__) |   _| | ___  ");
-        getLogger().info(" \\___ \\| __| '__| | | ||  ___/ | | | |/ _ \\ ");
-        getLogger().info(" ____) | |_| |  | |_| || |   | |_| | |  __/ ");
-        getLogger().info("|_____/ \\__|_|   \\__, ||_|    \\__,_|_|\\___| ");
-        getLogger().info("                  __/ |                    ");
-        getLogger().info("                 |___/                     ");
+        getLogger().info("   _____ _               _____       _       ");
+        getLogger().info("  / ____| |             |  __ \\     | |      ");
+        getLogger().info(" | (___ | |_ _ __ _   _ | |__) |   _| | ___  ");
+        getLogger().info("  \\___ \\| __| '__| | | ||  ___/ | | | |/ _ \\ ");
+        getLogger().info("  ____) | |_| |  | |_| || |   | |_| | |  __/ ");
+        getLogger().info(" |_____/ \\__|_|   \\__, ||_|    \\__,_|_|\\___| ");
+        getLogger().info("                   __/ |                    ");
+        getLogger().info("                  |___/                     ");
         getLogger().info(border);
 
     }
