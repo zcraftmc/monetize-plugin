@@ -85,7 +85,7 @@ public final class ConfigManager {
         Bukkit.getAsyncScheduler().runNow(plugin, task -> {
             try {
                 saveConfig();
-                saveData();
+                saveDateSync();
                 future.complete(null);
             } catch (IOException e) {
                 plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to save all configuration files: " + e.getMessage());
@@ -95,17 +95,33 @@ public final class ConfigManager {
         return future;
     }
 
+    public void saveAllSync() {
+        try {
+            saveConfig();
+            saveDateSync();
+            plugin.getLogger().info(ChatColor.GREEN + "[StorePulse] " + ChatColor.WHITE + "Data saved successfully.");
+        } catch (IOException e) {
+            plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to save all configuration files: " + e.getMessage());
+        }
+    }
+
     private void saveConfig() throws IOException {
         try (FileWriter writer = new FileWriter(configFile)) {
             yaml.dump(pluginConfig, writer);
         }
     }
 
+    public void saveDateSync() throws IOException {
+        try (FileWriter writer = new FileWriter(dataFile)) {
+            gson.toJson(pluginData, writer);
+        }
+    }
+
     public CompletableFuture<Void> saveData() {
         CompletableFuture<Void> future = new CompletableFuture<>();
         Bukkit.getAsyncScheduler().runNow(plugin, task -> {
-            try (FileWriter writer = new FileWriter(dataFile)) {
-                gson.toJson(pluginData, writer);
+            try {
+                saveDateSync();
                 future.complete(null);
             } catch (IOException e) {
                 plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to save data.json: " + e.getMessage());

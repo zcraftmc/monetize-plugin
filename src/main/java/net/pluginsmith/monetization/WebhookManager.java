@@ -79,8 +79,16 @@ public final class WebhookManager {
                 String avatarUrl = config.avatarApi.replace("{uuid}", purchase.playerUuid.toString());
                 String skinRenderUrl = config.skinRenderApi.replace("{uuid}", purchase.playerUuid.toString());
 
+                // Use avatar as thumbnail
                 embed.thumbnail = new DiscordWebhook.Embed.Thumbnail(avatarUrl);
-                embed.image = new DiscordWebhook.Embed.Image(skinRenderUrl);
+                
+                // Use skin render as image with fallback to avatar if skin render fails
+                if (isValidUrl(skinRenderUrl)) {
+                    embed.image = new DiscordWebhook.Embed.Image(skinRenderUrl);
+                } else {
+                    plugin.getLogger().warning(ChatColor.YELLOW + "[StorePulse] " + ChatColor.WHITE + "Skin render URL invalid, using avatar as fallback");
+                    embed.image = new DiscordWebhook.Embed.Image(avatarUrl);
+                }
 
                 embed.timestamp = Instant.ofEpochSecond(purchase.timestamp).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
                 embed.footer = new DiscordWebhook.Embed.Footer(config.branding.serverName, config.branding.serverIconUrl);
@@ -234,7 +242,15 @@ public final class WebhookManager {
             return Color.GRAY.getRGB() & 0xFFFFFF;
         }
     }
-
+    private boolean isValidUrl(String url) {
+        if (url == null || url.isEmpty()) return false;
+        try {
+            // Basic URL validation - check if it starts with http/https
+            return url.startsWith("http://") || url.startsWith("https://");
+        } catch (Exception e) {
+            return false;
+        }
+    }
     // --- Inner Class for Discord Webhook Payload ---
     public static final class DiscordWebhook {
         public String content;

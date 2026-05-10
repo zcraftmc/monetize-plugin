@@ -125,11 +125,12 @@ public final class MonetizationPlugin extends JavaPlugin {
             webhookServer.stop();
         }
 
-        // Save all data on disable
-        configManager.saveAll();
-        // Cancel all plugin-owned tasks
+        // Cancel all plugin-owned tasks before disabling
         Bukkit.getGlobalRegionScheduler().cancelTasks(this);
         Bukkit.getAsyncScheduler().cancelTasks(this);
+
+        // Save all data on disable (synchronously to avoid scheduling tasks during disable)
+        configManager.saveAllSync();
 
         printBanner(false);
     }

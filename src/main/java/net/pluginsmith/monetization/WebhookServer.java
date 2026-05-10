@@ -74,9 +74,10 @@ public final class WebhookServer {
 
             try {
                 String body = readRequestBody(exchange);
+                plugin.getLogger().info(ChatColor.YELLOW + "[StorePulse] " + ChatColor.WHITE + "Received webhook payload of size " + body.length() + " bytes");
+                plugin.getLogger().info(ChatColor.GRAY + "Payload: " + body);
+                
                 JsonObject webhookData = gson.fromJson(body, JsonObject.class);
-
-                plugin.getLogger().info("Received webhook payload: " + body); // Debug logging
 
                 String playerUuid;
                 String playerName;
@@ -84,25 +85,48 @@ public final class WebhookServer {
                 double amount;
                 String storeName = "generic";
 
+                // Tebex format: {player: {uuid, name}, packages: [{id}], price: {amount}}
                 if (webhookData.has("player") && webhookData.has("packages")) {
-                    playerUuid = webhookData.getAsJsonObject("player").get("uuid").getAsString();
-                    playerName = webhookData.getAsJsonObject("player").get("name").getAsString();
-                    productId = webhookData.getAsJsonArray("packages").get(0).getAsJsonObject().get("id").getAsString();
-                    amount = webhookData.getAsJsonObject("price").get("amount").getAsDouble();
-                    storeName = "tebex";
-                } else if (webhookData.has("uuid") && webhookData.has("username") && webhookData.has("package")) {
-                    playerUuid = webhookData.get("uuid").getAsString();
-                    playerName = webhookData.get("username").getAsString();
-                    productId = webhookData.getAsJsonObject("package").get("id").getAsString();
-                    amount = webhookData.get("price").getAsDouble();
-                    storeName = "craftingstore";
-                } else if (webhookData.has("playerUuid") && webhookData.has("playerName") && webhookData.has("productId") && webhookData.has("amount")) {
-                    playerUuid = webhookData.get("playerUuid").getAsString();
-                    playerName = webhookData.get("playerName").getAsString();
-                    productId = webhookData.get("productId").getAsString();
-                    amount = webhookData.get("amount").getAsDouble();
-                    if (webhookData.has("storeName")) {
-                        storeName = webhookData.get("storeName").getAsString();
+                    try {
+                        playerUuid = webhookData.getAsJsonObject("player").get("uuid").getAsString();
+                        playerName = webhookData.getAsJsonObject("player").get("name").getAsString();
+                        productId = webhookData.getAsJsonArray("packages").get(0).getAsJsonObject().get("id").getAsString();
+                        amount = webhookData.getAsJsonObject("price").get("amount").getAsDouble();
+                        storeName = "tebex";
+                        plugin.getLogger().info(ChatColor.GREEN + "[StorePulse] " + ChatColor.WHITE + "Detected Tebex webhook format");
+                    } catch (Exception e) {
+                        plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to parse Tebex payload: " + e.getMessage());
+                        throw new IllegalArgumentException("Invalid Tebex payload structure: " + e.getMessage());
+                    }
+                } 
+                // CraftingStore format: {uuid, username, package: {id}, price}
+                else if (webhookData.has("uuid") && webhookData.has("username") && webhookData.has("package")) {
+                    try {
+                        playerUuid = webhookData.get("uuid").getAsString();
+                        playerName = webhookData.get("username").getAsString();
+                        productId = webhookData.getAsJsonObject("package").get("id").getAsString();
+                        amount = webhookData.get("price").getAsDouble();
+                        storeName = "craftingstore";
+                        plugin.getLogger().info(ChatColor.GREEN + "[StorePulse] " + ChatColor.WHITE + "Detected CraftingStore webhook format");
+                    } catch (Exception e) {
+                        plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to parse CraftingStore payload: " + e.getMessage());
+                        throw new IllegalArgumentException("Invalid CraftingStore payload structure: " + e.getMessage());
+                    }
+                } 
+                // Generic format: {playerUuid, playerName, productId, amount, [storeName]}
+                else if (webhookData.has("playerUuid") && webhookData.has("playerName") && webhookData.has("productId") && webhookData.has("amount")) {
+                    try {
+                        playerUuid = webhookData.get("playerUuid").getAsString();
+                        playerName = webhookData.get("playerName").getAsString();
+                        productId = webhookData.get("productId").getAsString();
+                        amount = webhookData.get("amount").getAsDouble();
+                        if (webhookData.has("storeName")) {
+                            storeName = webhookData.get("storeName").getAsString();
+                        }
+                        plugin.getLogger().info(ChatColor.GREEN + "[StorePulse] " + ChatColor.WHITE + "Detected Generic webhook format (store=" + storeName + ")");
+                    } catch (Exception e) {
+                        plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to parse Generic payload: " + e.getMessage());
+                        throw new IllegalArgumentException("Invalid Generic payload structure: " + e.getMessage());
                     }
                 } else {
                     plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Unrecognized webhook payload structure. Supported formats:");

@@ -120,48 +120,181 @@ Legacy commands are also available:
 ## 🔧 Configuration
 
 ### Webhook Payload Formats
-StorePulse accepts webhooks from multiple payment processors:
+StorePulse accepts webhooks from multiple payment processors. All webhook payloads must be valid JSON and sent as `Content-Type: application/json`.
 
-#### Tebex Webhook
+#### Tebex Webhook Format
+Tebex sends webhooks with player info nested in a `player` object and packages in an array.
+
+**Required Fields:**
+- `player.uuid` - Player's UUID (valid UUID format)
+- `player.name` - Player's username
+- `packages[0].id` - Product ID
+- `price.amount` - Purchase amount
+
+**Example:**
 ```json
 {
   "player": {
-    "uuid": "player-uuid",
-    "name": "PlayerName"
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "TestPlayer"
   },
   "packages": [
     {
-      "id": "package-id"
+      "id": "package-123",
+      "name": "Premium Package"
     }
   ],
   "price": {
-    "amount": 10.00
-  }
-}
-```
-
-#### CraftingStore Webhook
-```json
-{
-  "uuid": "player-uuid",
-  "username": "PlayerName",
-  "package": {
-    "id": "package-id"
+    "amount": 9.99,
+    "currency": "USD"
   },
-  "price": 10.00
+  "transactionId": "tx-12345"
 }
 ```
 
-#### Generic Webhook
+**Testing Tebex Webhook:**
+```bash
+curl -X POST http://your-server:8080/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "player": {
+      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "TestPlayer"
+    },
+    "packages": [{"id": "test-package"}],
+    "price": {"amount": 9.99}
+  }'
+```
+
+#### CraftingStore Webhook Format
+CraftingStore uses a flatter structure with `uuid`, `username`, and `package` fields.
+
+**Required Fields:**
+- `uuid` - Player's UUID (valid UUID format)
+- `username` - Player's username
+- `package.id` - Product ID
+- `price` - Purchase amount
+
+**Example:**
 ```json
 {
-  "playerUuid": "player-uuid",
-  "playerName": "PlayerName",
-  "productId": "product-id",
-  "amount": 10.00,
-  "storeName": "custom-store"
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "TestPlayer",
+  "package": {
+    "id": "package-456",
+    "name": "Elite Pass"
+  },
+  "price": 14.99,
+  "currency": "USD",
+  "transactionId": "tx-67890"
 }
 ```
+
+**Testing CraftingStore Webhook:**
+```bash
+curl -X POST http://your-server:8080/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "TestPlayer",
+    "package": {"id": "test-package"},
+    "price": 9.99
+  }'
+```
+
+#### Generic/Custom Webhook Format
+Use this format for custom payment processors or testing.
+
+**Required Fields:**
+- `playerUuid` - Player's UUID (valid UUID format)
+- `playerName` - Player's username
+- `productId` - Product ID
+- `amount` - Purchase amount
+
+**Optional Fields:**
+- `storeName` - Name of the store (defaults to "generic")
+
+**Example:**
+```json
+{
+  "playerUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "playerName": "TestPlayer",
+  "productId": "custom-product-id",
+  "amount": 19.99,
+  "storeName": "MyCustomStore"
+}
+```
+
+**Testing Generic Webhook:**
+```bash
+curl -X POST http://your-server:8080/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "playerUuid": "550e8400-e29b-41d4-a716-446655440000",
+    "playerName": "TestPlayer",
+    "productId": "test-product",
+    "amount": 9.99
+  }'
+```
+
+### Webhook Troubleshooting
+
+#### Webhook Not Being Processed
+1. **Check webhook is enabled in config:**
+   ```yaml
+   webhook:
+     enabled: true
+     serverPort: 8080
+   ```
+
+2. **Verify webhook server is running:**
+   - Check server logs for: `Webhook server started on port 8080`
+   - Visit `http://your-server:8080/` in browser (should show status page)
+
+3. **Check Discord webhook URL is configured:**
+   ```yaml
+   discord:
+     webhookUrls:
+       default: "https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN"
+   ```
+
+4. **Enable debug logging:**
+   - Webhook payloads are logged to console when received
+   - Look for `[StorePulse] Received webhook payload` messages
+   - If payload is not logged, webhook never reached the server
+
+#### Webhook Received But Not Recorded
+1. **Check payload format:**
+   - Look for error message `[StorePulse] Unrecognized webhook payload structure`
+   - Verify all required fields are present
+   - Verify UUID format is valid (use `550e8400-e29b-41d4-a716-446655440000` format)
+
+2. **Verify store detection:**
+   - Should see `Detected [Tebex/CraftingStore/Generic] webhook format`
+   - If not detected, check payload structure against examples above
+
+3. **Check for UUID validation errors:**
+   - Look for `Invalid UUID format` or `placeholder UUID` messages
+   - Ensure real UUIDs are being sent, not placeholders like `player-uuid` or `uuid`
+
+#### Discord Embed Images Not Showing
+1. **Avatar shows but skin renderer doesn't:**
+   - Skin render URLs are validated and fallback to avatar automatically
+   - Check logs for fallback messages: `Skin render URL invalid, using avatar as fallback`
+
+2. **Neither avatar nor skin render shows:**
+   - Check URLs in config:
+     ```yaml
+     avatarApi: "https://crafatar.com/avatars/{uuid}?size=64&overlay"
+     skinRenderApi: "https://crafatar.com/renders/body/{uuid}?scale=2&overlay"
+     ```
+   - Replace `{uuid}` patterns or use alternative services like:
+     - Avatar: `https://mc-heads.net/avatar/{uuid}/64`
+     - Body: `https://mc-heads.net/body/{uuid}`
+
+3. **Check Discord webhook URL:**
+   - Verify the webhook URL is valid and not expired
+   - Test with: `curl https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN -d '{"content":"test"}'`
 
 ## 📊 Status Check
 Visit `http://your-server:port/` in a browser to verify the webhook server is running. You should see:

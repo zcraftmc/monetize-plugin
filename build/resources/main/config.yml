@@ -22,14 +22,17 @@ discord:
 branding:
   serverName: "My Server"
   serverIconUrl: "https://example.com/icon.png"
+  
 embedColors:
   purchase: "#00FF00"
   goalUpdate: "#FFFF00"
   goalComplete: "#0000FF"
+
 messages:
   thankYou: "Thank you, {player}, for your generous purchase of {product}!"
   goalComplete: "🎉 {goalName} has been completed! Thank you to all supporters!"
   goalUpdate: "{goalName} progress: {progressBar} {progressPercent}% ({current}/{target})"
+
 rolePings:
   defaultGoal: "<@&123456789012345678>"
 # ============================
@@ -38,8 +41,7 @@ rolePings:
 webhook:
   enabled: true
   serverPort: 8080
-store:
-  defaultStoreName: "generic"
+
 features:
   discordWebhooksEnabled: true
   donationGoalsEnabled: true
