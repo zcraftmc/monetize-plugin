@@ -31,6 +31,8 @@ public final class MonetizationCommand implements CommandExecutor, TabCompleter 
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         String name = command.getName().toLowerCase();
         switch (name) {
+            case "storepulse":
+                return handleStorePulse(sender, args);
             case "topdonors":
                 return handleTopDonors(sender, args);
             case "recentpurchases":
@@ -46,6 +48,63 @@ public final class MonetizationCommand implements CommandExecutor, TabCompleter 
                 return handleReload(sender);
             default:
                 return false;
+        }
+    }
+
+    private boolean handleStorePulse(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            sendStorePulseHelp(sender);
+            return true;
+        }
+
+        String subcommand = args[0].toLowerCase();
+        String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+
+        switch (subcommand) {
+            case "top":
+            case "topdonors":
+                return handleTopDonors(sender, subArgs);
+            case "recent":
+            case "recentpurchases":
+                return handleRecentPurchases(sender, subArgs);
+            case "goal":
+                return handleStorePulseGoal(sender, subArgs);
+            case "reload":
+                return handleReload(sender);
+            default:
+                sendStorePulseHelp(sender);
+                return true;
+        }
+    }
+
+    private void sendStorePulseHelp(CommandSender sender) {
+        sender.sendMessage("&6StorePulse Commands:");
+        sender.sendMessage("&e/storepulse top [limit] &7- Show top donors");
+        sender.sendMessage("&e/storepulse recent [limit] &7- Show recent purchases");
+        sender.sendMessage("&e/storepulse goal status <goalId> &7- Show goal status");
+        sender.sendMessage("&e/storepulse goal create <id> <name> <targetAmount> [expiryDays] &7- Create a donation goal");
+        sender.sendMessage("&e/storepulse goal edit <id> <field> <value> &7- Edit a donation goal");
+        sender.sendMessage("&e/storepulse reload &7- Reload StorePulse configuration");
+    }
+
+    private boolean handleStorePulseGoal(CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage("&cUsage: /storepulse goal <status|create|edit> ...");
+            return true;
+        }
+
+        String action = args[0].toLowerCase();
+        String[] goalArgs = Arrays.copyOfRange(args, 1, args.length);
+        switch (action) {
+            case "status":
+                return handleGoalStatus(sender, goalArgs);
+            case "create":
+                return handleGoalCreate(sender, goalArgs);
+            case "edit":
+                return handleGoalEdit(sender, goalArgs);
+            default:
+                sender.sendMessage("&cUnknown goal action: " + action);
+                return true;
         }
     }
 
@@ -174,6 +233,15 @@ public final class MonetizationCommand implements CommandExecutor, TabCompleter 
             return Collections.singletonList("<goal-name>");
         }
         if (name.equals("goaledit") && args.length == 2) {
+            return Arrays.asList("name", "target", "current", "expiry", "complete");
+        }
+        if (name.equals("storepulse") && args.length == 1) {
+            return Arrays.asList("top", "recent", "goal", "reload");
+        }
+        if (name.equals("storepulse") && args.length == 2 && args[0].equalsIgnoreCase("goal")) {
+            return Arrays.asList("status", "create", "edit");
+        }
+        if (name.equals("storepulse") && args.length == 3 && args[0].equalsIgnoreCase("goal") && args[1].equalsIgnoreCase("edit")) {
             return Arrays.asList("name", "target", "current", "expiry", "complete");
         }
         return Collections.emptyList();

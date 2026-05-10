@@ -8,33 +8,38 @@ authors: [ZCraft Studios]
 folia-supported: true
 
 commands:
+  storepulse:
+    description: StorePulse core command for webhook and goal management.
+    usage: "/storepulse <top|recent|goal|reload>"
+    aliases: [sp]
+    permission: storepulse.admin
   topdonors:
-    description: View the top supporters.
-    usage: "/<command> [page]"
+    description: StorePulse: view the top supporters.
+    usage: "/topdonors [limit]"
     permission: storepulse.view.topdonors
   recentpurchases:
-    description: View recent purchases.
-    usage: "/<command> [page]"
+    description: StorePulse: view recent purchases.
+    usage: "/recentpurchases [limit]"
     permission: storepulse.view.recentpurchases
   goalstatus:
-    description: View the status of donation goals.
-    usage: "/<command> [goalId]"
+    description: StorePulse: view the status of donation goals.
+    usage: "/goalstatus <goalId>"
     permission: storepulse.view.goalstatus
   goalcreate:
-    description: Create a new donation goal.
-    usage: "/<command> <id> <name> <targetAmount> [expiryDays]"
+    description: StorePulse: create a new donation goal.
+    usage: "/goalcreate <id> <name> <targetAmount> [expiryDays]"
     permission: storepulse.admin.goal
   goaledit:
-    description: Edit an existing donation goal.
-    usage: "/<command> <id> <name|target|current|expiry|complete> <value>"
+    description: StorePulse: edit an existing donation goal.
+    usage: "/goaledit <id> <name|target|current|expiry|complete> <value>"
     permission: storepulse.admin.goal
   reloadmonetization:
-    description: Reload the plugin configuration.
-    usage: "/<command>"
+    description: StorePulse: reload the plugin configuration.
+    usage: "/reloadmonetization"
     permission: storepulse.admin.reload
   reloadstorepulse:
-    description: Reload the plugin configuration.
-    usage: "/<command>"
+    description: StorePulse: reload the plugin configuration.
+    usage: "/reloadstorepulse"
     permission: storepulse.admin.reload
 
 permissions:

@@ -40,15 +40,13 @@ public final class WebhookServer {
         server.setExecutor(Executors.newCachedThreadPool());
 
         HttpHandler unifiedHandler = new UnifiedWebhookHandler();
-        server.createContext("/webhook", unifiedHandler);
-        server.createContext("/webhook/tebex", unifiedHandler);
-        server.createContext("/webhook/craftingstore", unifiedHandler);
-        server.createContext("/webhook/generic", unifiedHandler);
+        server.createContext("/", unifiedHandler);
 
         server.start();
         plugin.getLogger().info("Webhook server started on port " + config.webhook.serverPort);
-        plugin.getLogger().info("Unified webhook endpoint:");
-        plugin.getLogger().info("  - POST http://your-server:" + config.webhook.serverPort + "/webhook");
+        plugin.getLogger().info("StorePulse webhook listener is ready.");
+        plugin.getLogger().info("  - Visit http://your-server:" + config.webhook.serverPort + " to verify the listener is active.");
+        plugin.getLogger().info("  - POST any webhook payload to http://your-server:" + config.webhook.serverPort + " or any path.");
     }
 
     public void stop() {
@@ -63,7 +61,12 @@ public final class WebhookServer {
     private class UnifiedWebhookHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            if (!"POST".equals(exchange.getRequestMethod())) {
+            String method = exchange.getRequestMethod();
+            if ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method)) {
+                sendStatusPage(exchange);
+                return;
+            }
+            if (!"POST".equalsIgnoreCase(method)) {
                 sendResponse(exchange, 405, "Method not allowed");
                 return;
             }
@@ -117,6 +120,19 @@ public final class WebhookServer {
         }
     }
 
+    private void sendStatusPage(HttpExchange exchange) throws IOException {
+        String html = "<html><head><meta charset='UTF-8'><title>StorePulse Status</title></head>"
+            + "<body style='font-family:Segoe UI,Arial,sans-serif;background:#111;color:#eee;text-align:center;padding:40px;'>"
+            + "<div style='display:inline-block;text-align:left;max-width:540px;'>"
+            + "<h1 style='font-size:3rem;margin:0;color:#f2b632;'>STOREPULSe</h1>"
+            + "<p style='margin:0 0 24px 0;color:#bbb;font-size:1rem;'>Made by ZCraft Studios</p>"
+            + "<div style='background:#1b1b1b;border:1px solid #333;border-radius:16px;padding:20px;'>"
+            + "<p style='margin:0 0 8px 0;font-size:1.1rem;'>Listening for webhooks</p>"
+            + "<p style='margin:0;color:#999;'>Send POST requests to any path, for example <code>POST /</code></p>"
+            + "</div></div></body></html>";
+        sendResponse(exchange, 200, html, "text/html; charset=utf-8");
+    }
+
     private String readRequestBody(HttpExchange exchange) throws IOException {
         try (InputStream is = exchange.getRequestBody()) {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
@@ -124,9 +140,15 @@ public final class WebhookServer {
     }
 
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-        exchange.sendResponseHeaders(statusCode, response.length());
+        sendResponse(exchange, statusCode, response, "text/plain; charset=utf-8");
+    }
+
+    private void sendResponse(HttpExchange exchange, int statusCode, String response, String contentType) throws IOException {
+        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", contentType);
+        exchange.sendResponseHeaders(statusCode, bytes.length);
         try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes(StandardCharsets.UTF_8));
+            os.write(bytes);
         }
     }
 }

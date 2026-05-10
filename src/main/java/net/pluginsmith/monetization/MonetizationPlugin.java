@@ -77,6 +77,11 @@ public final class MonetizationPlugin extends JavaPlugin {
             reloadStorePulseCmd.setExecutor(commandHandler);
             reloadStorePulseCmd.setTabCompleter(commandHandler);
         }
+        PluginCommand storePulseCmd = getCommand("storepulse");
+        if (storePulseCmd != null) {
+            storePulseCmd.setExecutor(commandHandler);
+            storePulseCmd.setTabCompleter(commandHandler);
+        }
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new MonetizationListener(this, monetizationManager), this);
@@ -116,11 +121,14 @@ public final class MonetizationPlugin extends JavaPlugin {
     }
 
     private void printBanner(boolean enabled) {
-        String title = "StorePulse";
-        String byLine = "by ZCraft Studios";
+        String header = "STOREPULSe";
+        String byLine = "Made by ZCraft Studios";
         String state = enabled ? "ENABLED" : "DISABLED";
         String border = "========================================";
 
+        getLogger().info(border);
+        getLogger().info("  " + header + " " + state);
+        getLogger().info("  " + byLine);
         getLogger().info(border);
         getLogger().info("  _____ _               _____       _       ");
         getLogger().info(" / ____| |             |  __ \\     | |      ");
@@ -131,8 +139,7 @@ public final class MonetizationPlugin extends JavaPlugin {
         getLogger().info("                  __/ |                    ");
         getLogger().info("                 |___/                     ");
         getLogger().info(border);
-        getLogger().info(" " + title + " " + state + " - " + byLine);
-        getLogger().info(border);
+
     }
 
     public ConfigManager getConfigManager() {
