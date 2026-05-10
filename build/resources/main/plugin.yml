@@ -1,5 +1,5 @@
 name: StorePulse
-version: 1.0.0
+version: 1.1.0
 main: net.pluginsmith.monetization.MonetizationPlugin
 api-version: '1.21'
 description: StorePulse plugin with unified payment webhooks, Discord integration, and goal management.

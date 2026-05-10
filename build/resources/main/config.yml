@@ -4,16 +4,15 @@
 #Website - https://studio.z-craft.xyz\
 #Discord - https://dsc.gg/zcraftstudios
 
-
-
 # =========================
 # Discord Webhook URLs
 # =========================
 discord:
   webhookUrls:
     default: "YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE"
-    tebex: "YOUR_TEBEX_DISCORD_WEBHOOK_URL_HERE"
-    craftingstore: "YOUR_CRAFTINGSTORE_DISCORD_WEBHOOK_URL_HERE"
+# =========================
+# Stores and API Tokens
+# =========================
   apiTokens:
     tebex: "YOUR_TEBEX_SECRET_KEY_HERE"
     craftingstore: "YOUR_CRAFTINGSTORE_SECRET_KEY_HERE"

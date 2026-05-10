@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -75,6 +76,8 @@ public final class WebhookServer {
                 String body = readRequestBody(exchange);
                 JsonObject webhookData = gson.fromJson(body, JsonObject.class);
 
+                plugin.getLogger().info("Received webhook payload: " + body); // Debug logging
+
                 String playerUuid;
                 String playerName;
                 String productId;
@@ -102,20 +105,47 @@ public final class WebhookServer {
                         storeName = webhookData.get("storeName").getAsString();
                     }
                 } else {
+                    plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Unrecognized webhook payload structure. Supported formats:");
+                    plugin.getLogger().warning(ChatColor.YELLOW + "  - Tebex: " + ChatColor.WHITE + "{player:{uuid,name}, packages:[{id}], price:{amount}}");
+                    plugin.getLogger().warning(ChatColor.YELLOW + "  - CraftingStore: " + ChatColor.WHITE + "{uuid, username, package:{id}, price}");
+                    plugin.getLogger().warning(ChatColor.YELLOW + "  - Generic: " + ChatColor.WHITE + "{playerUuid, playerName, productId, amount[, storeName]}");
                     throw new IllegalArgumentException("Unrecognized webhook payload structure");
                 }
 
+                // Validate UUID format
+                if (playerUuid.equals("player-uuid") || playerUuid.equals("uuid")) {
+                    plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Received placeholder UUID '" + playerUuid + "'. Please use a real player UUID in webhook payloads.");
+                    throw new IllegalArgumentException("Invalid UUID: placeholder value received");
+                }
+
+                try {
+                    UUID.fromString(playerUuid); // Validate UUID format
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Invalid UUID format: " + playerUuid);
+                    throw new IllegalArgumentException("Invalid UUID format: " + playerUuid);
+                }
+
                 String finalStoreName = storeName;
+                String finalPlayerUuid = playerUuid;
+                String finalPlayerName = playerName;
+                String finalProductId = productId;
+                double finalAmount = amount;
+
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    monetizationManager.recordPurchase(UUID.fromString(playerUuid), playerName, productId, amount, finalStoreName);
+                    try {
+                        monetizationManager.recordPurchase(UUID.fromString(finalPlayerUuid), finalPlayerName, finalProductId, finalAmount, finalStoreName);
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("Failed to record purchase in main thread: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 });
 
                 sendResponse(exchange, 200, "Purchase recorded successfully");
                 plugin.getLogger().info("Webhook processed for " + playerName + " - " + productId + " (store=" + finalStoreName + ")");
 
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to process webhook: " + e.getMessage());
-                sendResponse(exchange, 400, "Invalid webhook data");
+                plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to process webhook: " + e.getMessage());
+                sendResponse(exchange, 400, "Invalid webhook data: " + e.getMessage());
             }
         }
     }

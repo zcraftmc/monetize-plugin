@@ -31,7 +31,7 @@ public final class MonetizationPlugin extends JavaPlugin {
         try {
             configManager.loadAll();
         } catch (IOException e) {
-            getLogger().severe("Failed to load configuration files: " + e.getMessage());
+            getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to load configuration files: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -45,8 +45,8 @@ public final class MonetizationPlugin extends JavaPlugin {
         try {
             webhookServer.start();
         } catch (IOException e) {
-            getLogger().severe("Failed to start webhook server: " + e.getMessage());
-            getLogger().severe("Make sure port " + configManager.getPluginConfig().webhook.serverPort + " is not in use by another application.");
+            getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to start webhook server: " + e.getMessage());
+            getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Make sure port " + configManager.getPluginConfig().webhook.serverPort + " is not in use by another application.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -206,7 +206,7 @@ public final class MonetizationPlugin extends JavaPlugin {
                 monetizationManager.recordPurchase(java.util.UUID.fromString(playerUuidStr), playerName, productId, amount, storeName);
                 getLogger().info("Simulated purchase recorded for " + playerName + " (" + productId + ")");
             } catch (IllegalArgumentException e) {
-                getLogger().warning("Invalid UUID for simulated purchase: " + playerUuidStr);
+                getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Invalid UUID for simulated purchase: " + playerUuidStr);
             }
         });
     }

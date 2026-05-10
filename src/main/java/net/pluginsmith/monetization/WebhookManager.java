@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -44,9 +45,15 @@ public final class WebhookManager {
     public void sendPurchaseWebhook(ConfigManager.Purchase purchase, Player player) {
         if (!config.features.discordWebhooksEnabled) return;
 
-        String webhookUrl = config.discord.webhookUrls.getOrDefault(purchase.storeName.toLowerCase(), config.discord.webhookUrls.get("default"));
+        String webhookUrl = config.discord.webhookUrls.getOrDefault("default", "");
         if (webhookUrl == null || webhookUrl.isEmpty() || webhookUrl.equals("YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE")) {
-            plugin.getLogger().warning("No Discord webhook URL configured for store '" + purchase.storeName + "' or default.");
+            plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Discord webhook URL not configured. Please set it in config.yml under discord.webhookUrls.default");
+            return;
+        }
+
+        // Validate URL format
+        if (!webhookUrl.startsWith("http://") && !webhookUrl.startsWith("https://")) {
+            plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Invalid Discord webhook URL format: " + webhookUrl + ". URL must start with http:// or https://");
             return;
         }
 
@@ -94,7 +101,7 @@ public final class WebhookManager {
                 }
 
             } catch (Exception e) {
-                plugin.getLogger().severe("Failed to send purchase webhook: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to send purchase webhook: " + e.getMessage());
             }
         });
     }
@@ -104,7 +111,7 @@ public final class WebhookManager {
 
         String webhookUrl = config.discord.webhookUrls.getOrDefault("default", "");
         if (webhookUrl.isEmpty() || webhookUrl.equals("YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE")) {
-            plugin.getLogger().warning("No default Discord webhook URL configured for goal updates.");
+            plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "No default Discord webhook URL configured for goal updates.");
             return;
         }
 
@@ -147,7 +154,7 @@ public final class WebhookManager {
 
                 sendWebhook(webhookUrl, webhook);
             } catch (Exception e) {
-                plugin.getLogger().severe("Failed to send goal update webhook: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to send goal update webhook: " + e.getMessage());
             }
         });
     }
@@ -157,7 +164,7 @@ public final class WebhookManager {
 
         String webhookUrl = config.discord.webhookUrls.getOrDefault("default", "");
         if (webhookUrl.isEmpty() || webhookUrl.equals("YOUR_DEFAULT_DISCORD_WEBHOOK_URL_HERE")) {
-            plugin.getLogger().warning("No default Discord webhook URL configured for goal completion.");
+            plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "No default Discord webhook URL configured for goal completion.");
             return;
         }
 
@@ -187,36 +194,43 @@ public final class WebhookManager {
 
                 sendWebhook(webhookUrl, webhook);
             } catch (Exception e) {
-                plugin.getLogger().severe("Failed to send goal completion webhook: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to send goal completion webhook: " + e.getMessage());
             }
         });
     }
 
     private void sendWebhook(String url, DiscordWebhook webhook) {
-        String jsonPayload = gson.toJson(webhook);
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-            .build();
+        try {
+            String jsonPayload = gson.toJson(webhook);
+            URI uri = URI.create(url); // This can throw IllegalArgumentException
 
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .thenAccept(response -> {
-                if (response.statusCode() != 204) { // 204 No Content is success for Discord webhooks
-                    plugin.getLogger().warning("Failed to send webhook. Status: " + response.statusCode() + ", Body: " + response.body());
-                }
-            })
-            .exceptionally(e -> {
-                plugin.getLogger().severe("Error sending webhook: " + e.getMessage());
-                return null;
-            });
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(10)) // Add timeout to prevent hanging
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+
+            httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenAccept(response -> {
+                    if (response.statusCode() != 204) { // 204 No Content is success for Discord webhooks
+                        plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to send Discord webhook. Status: " + response.statusCode() + ", Response: " + response.body());
+                    }
+                })
+                .exceptionally(e -> {
+                    plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Error sending Discord webhook to " + url + ": " + e.getMessage());
+                    return null;
+                });
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Invalid webhook URL: " + url + " - " + e.getMessage());
+        }
     }
 
     private int parseColor(String hexColor) {
         try {
             return Color.decode(hexColor).getRGB() & 0xFFFFFF;
         } catch (NumberFormatException e) {
-            plugin.getLogger().warning("Invalid hex color in config: " + hexColor + ". Using default.");
+            plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Invalid hex color in config: " + hexColor + ". Using default.");
             return Color.GRAY.getRGB() & 0xFFFFFF;
         }
     }

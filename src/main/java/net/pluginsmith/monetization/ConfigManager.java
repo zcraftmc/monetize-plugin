@@ -3,6 +3,7 @@ package net.pluginsmith.monetization;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -87,7 +88,7 @@ public final class ConfigManager {
                 saveData();
                 future.complete(null);
             } catch (IOException e) {
-                plugin.getLogger().severe("Failed to save all configuration files: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to save all configuration files: " + e.getMessage());
                 future.completeExceptionally(e);
             }
         });
@@ -107,7 +108,7 @@ public final class ConfigManager {
                 gson.toJson(pluginData, writer);
                 future.complete(null);
             } catch (IOException e) {
-                plugin.getLogger().severe("Failed to save data.json: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to save data.json: " + e.getMessage());
                 future.completeExceptionally(e);
             }
         });
@@ -121,7 +122,7 @@ public final class ConfigManager {
                 Files.copy(dataFile.toPath(), backupDataFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 future.complete(null);
             } catch (IOException e) {
-                plugin.getLogger().severe("Failed to create backup-data.json: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to create backup-data.json: " + e.getMessage());
                 future.completeExceptionally(e);
             }
         });
@@ -132,7 +133,7 @@ public final class ConfigManager {
         CompletableFuture<Void> future = new CompletableFuture<>();
         Bukkit.getAsyncScheduler().runNow(plugin, task -> {
             if (!backupDataFile.exists()) {
-                plugin.getLogger().warning("No backup-data.json found to restore.");
+                plugin.getLogger().warning(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "No backup-data.json found to restore.");
                 future.complete(null);
                 return;
             }
@@ -141,7 +142,7 @@ public final class ConfigManager {
                 loadAll(); // Reload all data after restoring
                 future.complete(null);
             } catch (IOException e) {
-                plugin.getLogger().severe("Failed to restore from backup-data.json: " + e.getMessage());
+                plugin.getLogger().severe(ChatColor.RED + "[StorePulse] " + ChatColor.WHITE + "Failed to restore from backup-data.json: " + e.getMessage());
                 future.completeExceptionally(e);
             }
         });

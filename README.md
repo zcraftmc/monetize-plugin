@@ -94,8 +94,6 @@ Edit `plugins/StorePulse/config.yml`:
 discord:
   webhookUrls:
     default: "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
-    tebex: "https://discord.com/api/webhooks/YOUR_TEBEX_WEBHOOK_URL"
-    craftingstore: "https://discord.com/api/webhooks/YOUR_CRAFTINGSTORE_WEBHOOK_URL"
   apiTokens:
     tebex: "YOUR_TEBEX_SECRET_KEY_HERE"
     craftingstore: "YOUR_CRAFTINGSTORE_SECRET_KEY_HERE"
